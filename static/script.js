@@ -13,6 +13,9 @@ class FaceToPhoneApp {
         this.mediaRecorder = null;
         this.audioChunks = [];
         this.isProcessing = false;
+        this.currentUser = 'demo_user';
+        this.showingTutorial = false;
+        this.tutorialStep = 0;
         
         this.init();
     }
@@ -29,11 +32,19 @@ class FaceToPhoneApp {
         // Initialize camera
         await this.initCamera();
         
+        // Check enrollment status
+        await this.checkEnrollmentStatus();
+        
         // Load initial data
         await this.loadDashboardData();
         
         // Start real-time updates
         this.startRealTimeUpdates();
+        
+        // Show welcome tutorial if first time
+        setTimeout(() => {
+            this.showWelcomeTutorial();
+        }, 3000);
         
         console.log('🚀 Face-to-Phone App Initialized');
     }
@@ -132,6 +143,112 @@ class FaceToPhoneApp {
         } catch (error) {
             console.error('Camera initialization failed:', error);
             this.showToast('Camera access denied. Please enable camera permissions.', 'error');
+        }
+    }
+
+    async checkEnrollmentStatus() {
+        try {
+            const response = await fetch(`/api/get-enrollment-status?user_id=${this.currentUser}`);
+            const status = await response.json();
+            
+            this.isEnrolled.face = status.face_enrolled;
+            this.isEnrolled.voice = status.voice_enrolled;
+            this.isEnrolled.pin = status.pin_set;
+            
+            this.updateEnrollmentStatus();
+            
+        } catch (error) {
+            console.error('Failed to check enrollment status:', error);
+        }
+    }
+
+    showWelcomeTutorial() {
+        if (this.showingTutorial) return;
+        
+        this.showingTutorial = true;
+        this.tutorialStep = 0;
+        
+        const tutorialSteps = [
+            {
+                title: "Welcome to Face-to-Phone! 🚀",
+                message: "Your AI-powered fraud detection system. Let's get you set up!",
+                action: "Next"
+            },
+            {
+                title: "Step 1: Enroll Your Biometrics 🔐",
+                message: "First, let's secure your account with face and voice recognition.",
+                action: "Go to Biometric",
+                target: "biometric"
+            },
+            {
+                title: "Step 2: Test Fraud Detection 🛡️",
+                message: "See how our AI detects suspicious transactions in real-time.",
+                action: "Try It Now",
+                target: "security"
+            },
+            {
+                title: "Step 3: Process Transactions 💰",
+                message: "Make secure transactions with biometric verification.",
+                action: "Start Trading",
+                target: "transactions"
+            }
+        ];
+        
+        this.showTutorialStep(tutorialSteps[0], () => {
+            this.showTutorialStep(tutorialSteps[1], () => {
+                this.showTutorialStep(tutorialSteps[2], () => {
+                    this.showTutorialStep(tutorialSteps[3], () => {
+                        this.showingTutorial = false;
+                    });
+                });
+            });
+        });
+    }
+
+    showTutorialStep(step, nextCallback) {
+        const modal = document.createElement('div');
+        modal.className = 'tutorial-modal';
+        modal.innerHTML = `
+            <div class="tutorial-content">
+                <div class="tutorial-header">
+                    <h3>${step.title}</h3>
+                    <button class="tutorial-close" onclick="this.parentElement.parentElement.parentElement.remove()">×</button>
+                </div>
+                <div class="tutorial-body">
+                    <p>${step.message}</p>
+                </div>
+                <div class="tutorial-footer">
+                    <button class="btn primary" onclick="app.handleTutorialAction('${step.action}', '${step.target || ''}', ${nextCallback ? 'true' : 'false'})">
+                        ${step.action}
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Auto-advance after 5 seconds if no action
+        setTimeout(() => {
+            if (modal.parentElement) {
+                modal.remove();
+                if (nextCallback) nextCallback();
+            }
+        }, 5000);
+    }
+
+    handleTutorialAction(action, target, hasNext) {
+        // Remove tutorial modal
+        const modal = document.querySelector('.tutorial-modal');
+        if (modal) modal.remove();
+        
+        if (target) {
+            this.switchView(target);
+        }
+        
+        if (hasNext) {
+            setTimeout(() => {
+                this.showWelcomeTutorial();
+            }, 1000);
         }
     }
 
