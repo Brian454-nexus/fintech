@@ -318,9 +318,9 @@ class SimplifiedBiometricAuth:
                 'enrolled_at': datetime.now(),
                 'confidence_threshold': 0.7
             }
-            
-            return {"status": "success", "message": "Face enrolled successfully"}
-            
+                
+                return {"status": "success", "message": "Face enrolled successfully"}
+                
         except Exception as e:
             return {"status": "error", "message": f"Face enrollment failed: {str(e)}"}
     
@@ -418,7 +418,7 @@ class SimplifiedBiometricAuth:
                 
         except Exception as e:
             return {"status": "error", "message": f"Voice verification failed: {str(e)}"}
-    
+
     def setup_pin(self, user_id, pin):
         """Setup PIN for user"""
         try:
@@ -496,9 +496,9 @@ class EnhancedFraudDetector:
             is_fraud = combined_risk_score['is_fraud']
             risk_level = combined_risk_score['risk_level']
             reason = combined_risk_score['reason']
-            
-            return {
-                "is_fraud": is_fraud,
+                
+                return {
+                    "is_fraud": is_fraud,
                 "anomaly_score": combined_risk_score['anomaly_score'],
                 "risk_level": risk_level,
                 "reason": reason,

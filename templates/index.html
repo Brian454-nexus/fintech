@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SecureBank | Face-to-Phone Banking</title>
+    <title>HAKIKI | Face-to-Phone Banking</title>
     <link rel="stylesheet" href="static/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -13,37 +13,113 @@
     <div id="loadingScreen" class="loading-screen">
         <div class="loading-content">
             <div class="loading-logo">
-                <i class="fas fa-university"></i>
+                <i class="fas fa-shield-alt"></i>
             </div>
-            <h2>SecureBank</h2>
-            <p>Face-to-Phone Banking</p>
+            <h1>HAKIKI</h1>
             <div class="loading-spinner"></div>
         </div>
     </div>
 
+    <!-- Authentication Screen -->
+    <div id="authScreen" class="auth-screen">
+        <div class="auth-container">
+            <div class="auth-header">
+                <div class="auth-logo">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>HAKIKI</span>
+                </div>
+                <p>Secure Face-to-Phone Banking</p>
+            </div>
+            
+            <div class="auth-options">
+                <button class="auth-btn primary" onclick="showSignUp()">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Create Account</span>
+                    <small>New to HAKIKI? Sign up now</small>
+            </button>
+                
+                <button class="auth-btn secondary" onclick="showSignIn()">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span>Sign In</span>
+                    <small>Already have an account?</small>
+            </button>
+                </div>
+
+            <div class="auth-features">
+                <div class="feature-item">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Biometric Security</span>
+                        </div>
+                <div class="feature-item">
+                    <i class="fas fa-bolt"></i>
+                    <span>Real-time Fraud Detection</span>
+                                </div>
+                <div class="feature-item">
+                    <i class="fas fa-mobile-alt"></i>
+                    <span>Offline Banking</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
     <!-- Registration Wizard -->
-    <div id="registrationWizard" class="registration-wizard">
+    <div id="registrationWizard" class="registration-wizard" style="display: none;">
         <div class="wizard-container">
             <div class="wizard-header">
                 <div class="wizard-logo">
-                    <i class="fas fa-university"></i>
-                    <span>SecureBank</span>
-                </div>
+                    <i class="fas fa-shield-alt"></i>
+                    <span>HAKIKI</span>
+                        </div>
                 <div class="wizard-progress">
                     <div class="progress-bar">
                         <div class="progress-fill" id="progressFill"></div>
+                            </div>
+                    <span class="progress-text" id="progressText">Step 1 of 5</span>
+                        </div>
                     </div>
-                    <span class="progress-text" id="progressText">Step 1 of 4</span>
+
+            <!-- Step 1: Personal Details -->
+            <div class="wizard-step active" id="step1">
+                <div class="step-content">
+                    <div class="step-icon">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <h2>Personal Information</h2>
+                    <p>Let's start with your basic details</p>
+                    
+                    <form class="personal-form">
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <input type="text" id="fullName" placeholder="Enter your full name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone Number</label>
+                            <input type="tel" id="phoneNumber" placeholder="07XX XXX XXX" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <input type="email" id="emailAddress" placeholder="your.email@example.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Date of Birth</label>
+                            <input type="date" id="dateOfBirth" required>
+                        </div>
+                    </form>
+                    
+                    <button class="btn-primary" onclick="nextStep()" id="nextBtn1" disabled>
+                        Continue
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
                 </div>
             </div>
 
-            <!-- Step 1: Welcome -->
-            <div class="wizard-step active" id="step1">
+            <!-- Step 2: Welcome -->
+            <div class="wizard-step" id="step2">
                 <div class="step-content">
                     <div class="step-icon">
                         <i class="fas fa-handshake"></i>
                     </div>
-                    <h2>Welcome to SecureBank</h2>
+                    <h2>Welcome to HAKIKI</h2>
                     <p>Your secure, biometric-powered banking experience</p>
                     <div class="feature-list">
                         <div class="feature-item">
@@ -60,26 +136,38 @@
                         </div>
                     </div>
                     <button class="btn-primary" onclick="nextStep()">
-                        Get Started
+                        Set Up Security
                         <i class="fas fa-arrow-right"></i>
                     </button>
                 </div>
             </div>
 
-            <!-- Step 2: Face Enrollment -->
-            <div class="wizard-step" id="step2">
+            <!-- Step 3: Face Enrollment -->
+            <div class="wizard-step" id="step3">
                 <div class="step-content">
                     <div class="step-icon">
                         <i class="fas fa-camera"></i>
                     </div>
                     <h2>Set Up Face Recognition</h2>
-                    <p>Take a clear photo of your face for secure authentication</p>
+                    <p>Position your face within the circle for secure authentication</p>
                     
-                    <div class="camera-container">
+                    <div class="camera-container-large">
                         <video id="faceVideo" autoplay muted></video>
                         <canvas id="faceCanvas" style="display: none;"></canvas>
-                        <div class="camera-overlay">
-                            <div class="face-guide"></div>
+                        <div class="camera-overlay-large">
+                            <div class="face-guide-large">
+                                <div class="guide-inner"></div>
+                                <div class="guide-corners">
+                                    <div class="corner top-left"></div>
+                                    <div class="corner top-right"></div>
+                                    <div class="corner bottom-left"></div>
+                                    <div class="corner bottom-right"></div>
+                                </div>
+                            </div>
+                            <div class="capture-instructions">
+                                <i class="fas fa-smile"></i>
+                                <span>Look directly at the camera</span>
+                            </div>
                         </div>
                     </div>
                     
@@ -99,7 +187,7 @@
                             <i class="fas fa-arrow-left"></i>
                             Back
                         </button>
-                        <button class="btn-primary" onclick="nextStep()" id="nextBtn2" disabled>
+                        <button class="btn-primary" onclick="nextStep()" id="nextBtn3" disabled>
                             Next
                             <i class="fas fa-arrow-right"></i>
                         </button>
@@ -107,31 +195,31 @@
                 </div>
             </div>
 
-            <!-- Step 3: Voice Enrollment -->
-            <div class="wizard-step" id="step3">
+            <!-- Step 4: Voice Enrollment -->
+            <div class="wizard-step" id="step4">
                 <div class="step-content">
                     <div class="step-icon">
                         <i class="fas fa-microphone"></i>
-                    </div>
+                            </div>
                     <h2>Set Up Voice Recognition</h2>
                     <p>Record your voice for secure authentication</p>
                     
-                    <div class="voice-container">
+                            <div class="voice-container">
                         <div class="voice-visualizer" id="voiceVisualizer">
                             <div class="voice-wave"></div>
                             <div class="voice-wave"></div>
                             <div class="voice-wave"></div>
                             <div class="voice-wave"></div>
                             <div class="voice-wave"></div>
-                        </div>
-                        <div class="voice-instructions">
+                                </div>
+                                <div class="voice-instructions">
                             <p>Say: "My voice is my password"</p>
-                        </div>
-                    </div>
+                                </div>
+                            </div>
                     
                     <div class="voice-controls">
                         <button class="btn-secondary" onclick="startVoiceRecording()">
-                            <i class="fas fa-microphone"></i>
+                                    <i class="fas fa-microphone"></i>
                             Start Recording
                         </button>
                         <button class="btn-primary" onclick="stopVoiceRecording()" id="stopVoiceBtn" disabled>
@@ -144,26 +232,26 @@
                         <button class="btn-outline" onclick="prevStep()">
                             <i class="fas fa-arrow-left"></i>
                             Back
-                        </button>
+                                </button>
                         <button class="btn-primary" onclick="nextStep()" id="nextBtn3" disabled>
                             Next
                             <i class="fas fa-arrow-right"></i>
-                        </button>
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- Step 4: PIN Setup -->
-            <div class="wizard-step" id="step4">
+            <!-- Step 5: PIN Setup -->
+            <div class="wizard-step" id="step5">
                 <div class="step-content">
                     <div class="step-icon">
                         <i class="fas fa-key"></i>
-                    </div>
+                            </div>
                     <h2>Set Up PIN</h2>
                     <p>Create a 4-digit PIN as backup authentication</p>
                     
-                    <div class="pin-container">
-                        <div class="pin-input">
+                            <div class="pin-container">
+                                <div class="pin-input">
                             <input type="password" id="pinInput" maxlength="4" placeholder="Enter 4-digit PIN">
                             <div class="pin-dots">
                                 <div class="pin-dot"></div>
@@ -171,7 +259,7 @@
                                 <div class="pin-dot"></div>
                                 <div class="pin-dot"></div>
                             </div>
-                        </div>
+                                </div>
                         <div class="pin-keypad">
                             <button class="pin-key" onclick="addPinDigit('1')">1</button>
                             <button class="pin-key" onclick="addPinDigit('2')">2</button>
@@ -186,8 +274,8 @@
                             <button class="pin-key" onclick="clearPinDigit()">
                                 <i class="fas fa-backspace"></i>
                             </button>
-                        </div>
-                    </div>
+                                </div>
+                            </div>
                     
                     <div class="step-navigation">
                         <button class="btn-outline" onclick="prevStep()">
@@ -197,12 +285,12 @@
                         <button class="btn-primary" onclick="completeRegistration()" id="completeBtn" disabled>
                             Complete Setup
                             <i class="fas fa-check"></i>
-                        </button>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
 
     <!-- Main Banking App -->
     <div id="bankingApp" class="banking-app" style="display: none;">
@@ -210,16 +298,16 @@
         <header class="banking-header">
             <div class="header-content">
                 <div class="banking-logo">
-                    <i class="fas fa-university"></i>
-                    <span>SecureBank</span>
+                    <i class="fas fa-shield-alt"></i>
+                    <span>HAKIKI</span>
                 </div>
                 <div class="user-info">
-                    <div class="user-avatar">
+                    <div class="user-avatar" id="userAvatar">
                         <i class="fas fa-user"></i>
                     </div>
                     <div class="user-details">
-                        <span class="user-name">John Doe</span>
-                        <span class="account-balance">KSh 25,000</span>
+                        <span class="user-name" id="userName">Loading...</span>
+                        <span class="account-balance" id="accountBalance">KSh 0</span>
                     </div>
                 </div>
             </div>
@@ -228,7 +316,7 @@
         <!-- Quick Actions -->
         <div class="quick-actions">
             <button class="action-btn" onclick="showSendMoney()">
-                <i class="fas fa-paper-plane"></i>
+                                    <i class="fas fa-paper-plane"></i>
                 <span>Send Money</span>
             </button>
             <button class="action-btn" onclick="showBuyAirtime()">
@@ -242,28 +330,28 @@
             <button class="action-btn" onclick="showWithdraw()">
                 <i class="fas fa-money-bill-wave"></i>
                 <span>Withdraw</span>
-            </button>
-        </div>
+                                </button>
+                    </div>
 
-        <!-- Transaction History -->
+                    <!-- Transaction History -->
         <div class="transaction-section">
             <div class="section-header">
                 <h3>Recent Transactions</h3>
                 <button class="btn-text" onclick="showAllTransactions()">View All</button>
-            </div>
+                        </div>
             <div class="transaction-list" id="transactionList">
                 <!-- Transactions will be loaded here -->
-            </div>
-        </div>
+                                    </div>
+                                </div>
 
         <!-- Continuous Biometric Monitoring -->
         <div class="biometric-monitor" id="biometricMonitor">
             <div class="monitor-status">
                 <i class="fas fa-shield-alt"></i>
                 <span>Biometric Security Active</span>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
 
     <!-- Transaction Modal -->
     <div id="transactionModal" class="modal">
@@ -271,53 +359,53 @@
             <div class="modal-header">
                 <h3 id="modalTitle">Send Money</h3>
                 <button class="close-btn" onclick="closeModal()">×</button>
-            </div>
+                </div>
             <div class="modal-body">
                 <form id="transactionForm">
                     <div class="form-group">
                         <label>Amount (KSh)</label>
                         <input type="number" id="amount" placeholder="Enter amount" required>
-                    </div>
+                        </div>
                     <div class="form-group">
                         <label>Phone Number</label>
                         <input type="tel" id="phoneNumber" placeholder="07XX XXX XXX" required>
-                    </div>
+                                    </div>
                     <div class="form-group">
                         <label>Reason (Optional)</label>
                         <input type="text" id="reason" placeholder="e.g., School fees">
-                    </div>
+                                    </div>
                 </form>
-            </div>
+                                </div>
             <div class="modal-footer">
                 <button class="btn-outline" onclick="closeModal()">Cancel</button>
                 <button class="btn-primary" onclick="processTransaction()">
                     <i class="fas fa-shield-alt"></i>
                     Send Securely
                 </button>
-            </div>
-        </div>
-    </div>
+                            </div>
+                        </div>
+                    </div>
 
     <!-- Biometric Verification Modal -->
     <div id="biometricModal" class="modal biometric-modal">
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Verify Your Identity</h3>
-            </div>
+                        </div>
             <div class="modal-body">
                 <div class="verification-container">
                     <div class="verification-method active" id="faceVerification">
                         <div class="verification-icon">
                             <i class="fas fa-camera"></i>
-                        </div>
+                                    </div>
                         <h4>Face Verification</h4>
                         <p>Look at the camera to verify your identity</p>
                         <div class="camera-preview">
                             <video id="verificationVideo" autoplay muted></video>
                             <div class="verification-overlay">
                                 <div class="face-guide"></div>
-                            </div>
-                        </div>
+                                    </div>
+                                </div>
                         <button class="btn-primary" onclick="verifyFace()">
                             <i class="fas fa-camera"></i>
                             Verify Face
@@ -342,7 +430,7 @@
                             Verify Voice
                         </button>
                     </div>
-                    
+
                     <div class="verification-method" id="pinVerification">
                         <div class="verification-icon">
                             <i class="fas fa-key"></i>
@@ -361,11 +449,11 @@
                         <button class="btn-primary" onclick="verifyPIN()">
                             <i class="fas fa-check"></i>
                             Verify PIN
-                        </button>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
     </div>
 
     <!-- Toast Notifications -->

@@ -4,8 +4,12 @@
 class SecureBankApp {
     constructor() {
         this.currentStep = 1;
-        this.totalSteps = 4;
+        this.totalSteps = 5;
         this.userProfile = {
+            fullName: '',
+            phoneNumber: '',
+            emailAddress: '',
+            dateOfBirth: '',
             faceTemplate: null,
             voiceTemplate: null,
             pin: null,
@@ -18,6 +22,8 @@ class SecureBankApp {
         this.currentUser = 'demo_user';
         this.fraudAlerts = [];
         this.isOfflineMode = true;
+        this.continuousMonitoring = null;
+        this.securitySnapshots = [];
         
         this.init();
     }
@@ -36,7 +42,7 @@ class SecureBankApp {
         // Show loading screen
         setTimeout(() => {
             document.getElementById('loadingScreen').classList.add('hidden');
-            this.showRegistrationWizard();
+            this.showAuthScreen();
         }, 2000);
 
         // Initialize event listeners
@@ -47,6 +53,17 @@ class SecureBankApp {
     }
 
     setupEventListeners() {
+        // Personal details form validation
+        const personalForm = document.querySelector('.personal-form');
+        if (personalForm) {
+            const inputs = personalForm.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.addEventListener('input', () => {
+                    this.validatePersonalDetails();
+                });
+            });
+        }
+
         // PIN input listener
         const pinInput = document.getElementById('pinInput');
         if (pinInput) {
@@ -65,16 +82,72 @@ class SecureBankApp {
         }
     }
 
+    showAuthScreen() {
+        document.getElementById('authScreen').style.display = 'block';
+    }
+
+    showSignUp() {
+        document.getElementById('authScreen').style.display = 'none';
+        this.showRegistrationWizard();
+    }
+
+    showSignIn() {
+        // For demo purposes, just show the banking app
+        // In a real app, this would verify credentials
+        this.showBankingApp();
+    }
+
+    validatePersonalDetails() {
+        const fullName = document.getElementById('fullName').value;
+        const phoneNumber = document.getElementById('phoneNumber').value;
+        const emailAddress = document.getElementById('emailAddress').value;
+        const dateOfBirth = document.getElementById('dateOfBirth').value;
+        
+        const isValid = fullName.length > 0 && 
+                      phoneNumber.length >= 10 && 
+                      emailAddress.includes('@') && 
+                      dateOfBirth.length > 0;
+        
+        const nextBtn = document.getElementById('nextBtn1');
+        if (nextBtn) {
+            nextBtn.disabled = !isValid;
+        }
+        
+        if (isValid) {
+            this.userProfile.fullName = fullName;
+            this.userProfile.phoneNumber = phoneNumber;
+            this.userProfile.emailAddress = emailAddress;
+            this.userProfile.dateOfBirth = dateOfBirth;
+        }
+    }
+
     showRegistrationWizard() {
         document.getElementById('registrationWizard').style.display = 'block';
         this.updateProgress();
     }
 
     showBankingApp() {
+        document.getElementById('authScreen').style.display = 'none';
         document.getElementById('registrationWizard').style.display = 'none';
         document.getElementById('bankingApp').style.display = 'block';
+        this.updateUserInfo();
         this.loadTransactionHistory();
         this.startContinuousMonitoring();
+    }
+
+    updateUserInfo() {
+        const userName = document.getElementById('userName');
+        const accountBalance = document.getElementById('accountBalance');
+        
+        if (userName) {
+            userName.textContent = this.userProfile.fullName || 'User';
+        }
+        
+        if (accountBalance) {
+            // Generate a random balance for demo
+            const balance = Math.floor(Math.random() * 50000) + 10000;
+            accountBalance.textContent = `KSh ${balance.toLocaleString()}`;
+        }
     }
 
     updateProgress() {
@@ -202,7 +275,7 @@ class SecureBankApp {
             
             // Animate voice visualizer
             this.animateVoiceVisualizer();
-            
+
         } catch (error) {
             console.error('Microphone access failed:', error);
             this.showToast('Microphone access denied. Please enable microphone permissions.', 'error');
@@ -286,64 +359,118 @@ class SecureBankApp {
     loadTransactionHistory() {
         const transactionList = document.getElementById('transactionList');
         if (transactionList) {
-            const transactions = [
-                {
-                    type: 'Send Money',
-                    details: 'To John Doe - 0712345678',
-                    amount: -5000,
-                    time: '2 hours ago'
-                },
-                {
-                    type: 'Buy Airtime',
-                    details: 'Self - 1000 KSh',
-                    amount: -1000,
-                    time: '1 day ago'
-                },
-                {
-                    type: 'Receive Money',
-                    details: 'From Jane Smith',
-                    amount: 15000,
-                    time: '2 days ago'
-                },
-                {
-                    type: 'Pay Bill',
-                    details: 'KPLC - Account 123456',
-                    amount: -2500,
-                    time: '3 days ago'
-                }
-            ];
+            // Load from localStorage or show empty state
+            const savedTransactions = localStorage.getItem('userTransactions');
+            const transactions = savedTransactions ? JSON.parse(savedTransactions) : [];
             
-            transactionList.innerHTML = transactions.map(tx => `
-                <div class="transaction-item">
-                    <div class="transaction-info">
-                        <div class="transaction-type">${tx.type}</div>
-                        <div class="transaction-details">${tx.details}</div>
-                        <div class="transaction-time">${tx.time}</div>
+            if (transactions.length === 0) {
+                transactionList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-receipt"></i>
+                        <h4>No transactions yet</h4>
+                        <p>Your transaction history will appear here</p>
                     </div>
-                    <div class="transaction-amount ${tx.amount > 0 ? 'positive' : 'negative'}">
-                        ${tx.amount > 0 ? '+' : ''}KSh ${Math.abs(tx.amount).toLocaleString()}
+                `;
+            } else {
+                transactionList.innerHTML = transactions.map(tx => `
+                    <div class="transaction-item">
+                        <div class="transaction-info">
+                            <div class="transaction-type">${tx.type}</div>
+                            <div class="transaction-details">${tx.details}</div>
+                            <div class="transaction-time">${tx.time}</div>
+                        </div>
+                        <div class="transaction-amount ${tx.amount > 0 ? 'positive' : 'negative'}">
+                            ${tx.amount > 0 ? '+' : ''}KSh ${Math.abs(tx.amount).toLocaleString()}
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `).join('');
+            }
         }
     }
 
     startContinuousMonitoring() {
-        // Simulate continuous biometric monitoring
-        setInterval(() => {
+        // Start continuous biometric monitoring
+        this.continuousMonitoring = setInterval(() => {
             this.performContinuousVerification();
-        }, 30000); // Check every 30 seconds
+        }, 15000); // Check every 15 seconds
         
         console.log('Continuous biometric monitoring started');
     }
 
     async performContinuousVerification() {
-        // Simulate continuous verification
-        const isVerified = Math.random() > 0.1; // 90% success rate
+        // Simulate continuous verification with face capture
+        const isVerified = Math.random() > 0.05; // 95% success rate
         
         if (!isVerified) {
-            this.showFraudAlert('🚨 Unauthorized access detected! Account locked for security.', 'fraud');
-            this.logFraudEvent('Continuous verification failed - possible unauthorized access', 'security');
+            // Capture unauthorized person's face
+            await this.captureSecuritySnapshot();
+            
+            this.showFraudAlert('🚨 Unauthorized access detected! Security snapshot captured.', 'fraud');
+            this.logFraudEvent('Continuous verification failed - unauthorized person detected', 'security');
+            
+            // Lock account
+            this.lockAccount();
+        }
+    }
+
+    async captureSecuritySnapshot() {
+        try {
+            if (this.camera) {
+                const video = document.getElementById('verificationVideo');
+                if (video) {
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    context.drawImage(video, 0, 0);
+                    
+                    const imageData = canvas.toDataURL('image/jpeg', 0.8);
+                    
+                    const securitySnapshot = {
+                        id: Date.now(),
+                        timestamp: new Date().toISOString(),
+                        image: imageData,
+                        reason: 'Unauthorized access attempt',
+                        userAgent: navigator.userAgent,
+                        location: window.location.href
+                    };
+                    
+                    this.securitySnapshots.push(securitySnapshot);
+                    localStorage.setItem('securitySnapshots', JSON.stringify(this.securitySnapshots));
+                    
+                    console.log('🔒 SECURITY SNAPSHOT CAPTURED:', securitySnapshot);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to capture security snapshot:', error);
+        }
+    }
+
+    lockAccount() {
+        // Lock the account and show security message
+        this.showToast('Account locked for security. Please contact support.', 'error');
+        
+        // Disable all transaction buttons
+        const actionBtns = document.querySelectorAll('.action-btn');
+        actionBtns.forEach(btn => {
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+        });
+        
+        // Show security message
+        const transactionSection = document.querySelector('.transaction-section');
+        if (transactionSection) {
+            transactionSection.innerHTML = `
+                <div class="security-lock-message">
+                    <i class="fas fa-lock"></i>
+                    <h3>Account Locked</h3>
+                    <p>Your account has been locked for security reasons. Please contact support.</p>
+                    <button class="btn-primary" onclick="location.reload()">
+                        <i class="fas fa-refresh"></i>
+                        Restart App
+                    </button>
+                </div>
+            `;
         }
     }
 
@@ -429,7 +556,7 @@ class SecureBankApp {
             if (isVerified) {
                 this.showToast('Face verification successful!', 'success');
                 this.completeTransaction();
-            } else {
+                    } else {
                 this.showToast('Face verification failed. Please try again.', 'error');
                 this.showFraudAlert('🚨 Face verification failed - possible fraud attempt', 'fraud');
             }
@@ -451,9 +578,9 @@ class SecureBankApp {
             const isVerified = Math.random() > 0.2; // 80% success rate
             
             if (isVerified) {
-                this.showToast('Voice verification successful!', 'success');
+                            this.showToast('Voice verification successful!', 'success');
                 this.completeTransaction();
-            } else {
+                        } else {
                 this.showToast('Voice verification failed. Please try again.', 'error');
                 this.showFraudAlert('🚨 Voice verification failed - possible fraud attempt', 'fraud');
             }
@@ -610,6 +737,14 @@ class SecureBankApp {
 }
 
 // Global functions for HTML onclick handlers
+function showSignUp() {
+    if (app) app.showSignUp();
+}
+
+function showSignIn() {
+    if (app) app.showSignIn();
+}
+
 function nextStep() {
     if (app) app.nextStep();
 }
