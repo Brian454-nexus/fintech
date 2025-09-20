@@ -1,5 +1,4 @@
 from flask import Flask, request, jsonify, render_template
-from flask_cors import CORS
 import os
 import json
 import base64
@@ -7,16 +6,8 @@ import hashlib
 from datetime import datetime, timedelta
 import random
 import string
-import numpy as np
-from io import BytesIO
-import threading
-import time
-import math
-from collections import deque
-import statistics
 
 app = Flask(__name__)
-CORS(app)
 
 # Simplified Biometric Authentication (No heavy dependencies)
 class SimplifiedBiometricAuth:
