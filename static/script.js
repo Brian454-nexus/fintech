@@ -78,8 +78,19 @@ class SecureBankApp {
                 input.addEventListener('input', () => {
                     this.validatePersonalDetails();
                 });
+                input.addEventListener('change', () => {
+                    this.validatePersonalDetails();
+                });
+                input.addEventListener('blur', () => {
+                    this.validatePersonalDetails();
+                });
             });
         }
+        
+        // Also validate on page load
+        setTimeout(() => {
+            this.validatePersonalDetails();
+        }, 1000);
 
         // PIN input listener
         const pinInput = document.getElementById('pinInput');
@@ -101,6 +112,14 @@ class SecureBankApp {
 
     showAuthScreen() {
         try {
+            // Hide other screens
+            const regWizard = document.getElementById('registrationWizard');
+            const bankingApp = document.getElementById('bankingApp');
+            
+            if (regWizard) regWizard.style.display = 'none';
+            if (bankingApp) bankingApp.style.display = 'none';
+            
+            // Show auth screen
             const authScreen = document.getElementById('authScreen');
             if (authScreen) {
                 authScreen.style.display = 'block';
@@ -128,40 +147,73 @@ class SecureBankApp {
     }
 
     validatePersonalDetails() {
-        const fullName = document.getElementById('fullName').value;
-        const phoneNumber = document.getElementById('phoneNumber').value;
-        const emailAddress = document.getElementById('emailAddress').value;
-        const dateOfBirth = document.getElementById('dateOfBirth').value;
+        const fullName = document.getElementById('fullName');
+        const phoneNumber = document.getElementById('phoneNumber');
+        const emailAddress = document.getElementById('emailAddress');
+        const dateOfBirth = document.getElementById('dateOfBirth');
         
-        const isValid = fullName.length > 0 && 
-                      phoneNumber.length >= 10 && 
-                      emailAddress.includes('@') && 
-                      dateOfBirth.length > 0;
+        if (!fullName || !phoneNumber || !emailAddress || !dateOfBirth) {
+            console.log('Form elements not found');
+            return;
+        }
+        
+        const isValid = fullName.value.trim().length > 0 && 
+                      phoneNumber.value.trim().length >= 10 && 
+                      emailAddress.value.trim().includes('@') && 
+                      dateOfBirth.value.trim().length > 0;
+        
+        console.log('Form validation:', {
+            fullName: fullName.value,
+            phoneNumber: phoneNumber.value,
+            emailAddress: emailAddress.value,
+            dateOfBirth: dateOfBirth.value,
+            isValid: isValid
+        });
         
         const nextBtn = document.getElementById('nextBtn1');
         if (nextBtn) {
             nextBtn.disabled = !isValid;
+            console.log('Next button disabled:', nextBtn.disabled);
         }
         
         if (isValid) {
-            this.userProfile.fullName = fullName;
-            this.userProfile.phoneNumber = phoneNumber;
-            this.userProfile.emailAddress = emailAddress;
-            this.userProfile.dateOfBirth = dateOfBirth;
+            this.userProfile.fullName = fullName.value.trim();
+            this.userProfile.phoneNumber = phoneNumber.value.trim();
+            this.userProfile.emailAddress = emailAddress.value.trim();
+            this.userProfile.dateOfBirth = dateOfBirth.value.trim();
         }
     }
 
     showRegistrationWizard() {
-        document.getElementById('registrationWizard').style.display = 'block';
+        // Hide other screens
+        const authScreen = document.getElementById('authScreen');
+        const bankingApp = document.getElementById('bankingApp');
+        
+        if (authScreen) authScreen.style.display = 'none';
+        if (bankingApp) bankingApp.style.display = 'none';
+        
+        // Show registration wizard
+        const regWizard = document.getElementById('registrationWizard');
+        if (regWizard) {
+            regWizard.style.display = 'block';
+        }
+        
         this.updateProgress();
     }
 
     showBankingApp() {
-        document.getElementById('authScreen').style.display = 'none';
-        document.getElementById('registrationWizard').style.display = 'none';
-        document.getElementById('bankingApp').style.display = 'block';
+        // Hide all other screens
+        const authScreen = document.getElementById('authScreen');
+        const regWizard = document.getElementById('registrationWizard');
+        const bankingApp = document.getElementById('bankingApp');
+        
+        if (authScreen) authScreen.style.display = 'none';
+        if (regWizard) regWizard.style.display = 'none';
+        if (bankingApp) bankingApp.style.display = 'block';
+        
         this.updateUserInfo();
         this.loadTransactionHistory();
+        this.updateSecurityStats();
         this.startContinuousMonitoring();
     }
 
@@ -251,11 +303,40 @@ class SecureBankApp {
             if (video) {
                 video.srcObject = this.camera;
                 document.getElementById('captureBtn').disabled = false;
+                
+                // Start liveness detection
+                this.startLivenessDetection();
             }
         }
     }
 
-    captureFace() {
+    startLivenessDetection() {
+        // Simulate liveness detection challenges
+        const challenges = [
+            "Please blink your eyes",
+            "Please turn your head slightly left",
+            "Please turn your head slightly right",
+            "Please smile naturally",
+            "Please look directly at the camera"
+        ];
+        
+        let currentChallenge = 0;
+        
+        const showChallenge = () => {
+            if (currentChallenge < challenges.length) {
+                this.showToast(challenges[currentChallenge], 'info');
+                currentChallenge++;
+                
+                // Show next challenge after 2 seconds
+                setTimeout(showChallenge, 2000);
+            }
+        };
+        
+        // Start challenges after 1 second
+        setTimeout(showChallenge, 1000);
+    }
+
+    async captureFace() {
         const video = document.getElementById('faceVideo');
         const canvas = document.getElementById('faceCanvas');
         
@@ -267,10 +348,23 @@ class SecureBankApp {
             
             // Convert to base64
             const imageData = canvas.toDataURL('image/jpeg', 0.8);
+            
+            // Analyze for fraud before saving
+            this.showToast('Analyzing face for security...', 'info');
+            
+            const fraudAnalysis = await this.analyzeFaceForFraud(imageData);
+            
+            if (fraudAnalysis.isFraud) {
+                this.showToast(`Security check failed: ${fraudAnalysis.reason}`, 'error');
+                this.showFraudAlert(`🚨 ${fraudAnalysis.reason}`, 'fraud');
+                return;
+            }
+            
+            // Save face template
             this.userProfile.faceTemplate = imageData;
             
-            this.showToast('Face captured successfully!', 'success');
-            document.getElementById('nextBtn2').disabled = false;
+            this.showToast('Face captured and verified successfully!', 'success');
+            document.getElementById('nextBtn3').disabled = false;
             
             // Stop camera
             if (this.camera) {
@@ -578,15 +672,29 @@ class SecureBankApp {
         this.showToast('Verifying your face...', 'info');
         
         try {
-            // Simulate face verification
+            // Capture current face for analysis
+            const currentFace = await this.captureCurrentFace();
+            
+            // Simulate face verification with anti-spoofing
             await new Promise(resolve => setTimeout(resolve, 2000));
             
+            // Advanced fraud detection
+            const fraudAnalysis = await this.analyzeFaceForFraud(currentFace);
+            
+            if (fraudAnalysis.isFraud) {
+                this.showFraudAlert(`🚨 ${fraudAnalysis.reason}`, 'fraud');
+                this.logFraudEvent(fraudAnalysis.reason, 'face_spoofing');
+                this.captureSecuritySnapshot();
+                return;
+            }
+            
+            // Regular verification
             const isVerified = Math.random() > 0.2; // 80% success rate
             
             if (isVerified) {
                 this.showToast('Face verification successful!', 'success');
                 this.completeTransaction();
-                    } else {
+            } else {
                 this.showToast('Face verification failed. Please try again.', 'error');
                 this.showFraudAlert('🚨 Face verification failed - possible fraud attempt', 'fraud');
             }
@@ -595,6 +703,141 @@ class SecureBankApp {
         } finally {
             this.isProcessing = false;
         }
+    }
+
+    async captureCurrentFace() {
+        const video = document.getElementById('verificationVideo');
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0);
+        
+        return canvas.toDataURL('image/jpeg', 0.8);
+    }
+
+    async analyzeFaceForFraud(faceImage) {
+        // Simulate advanced AI analysis for fraud detection
+        const fraudChecks = {
+            // Check for photo spoofing (static image)
+            isStaticImage: this.detectStaticImage(faceImage),
+            
+            // Check for screen reflection (phone showing photo)
+            hasScreenReflection: this.detectScreenReflection(faceImage),
+            
+            // Check for 3D depth (real face vs photo)
+            hasDepth: this.detectDepth(faceImage),
+            
+            // Check for eye movement (liveness)
+            hasEyeMovement: this.detectEyeMovement(faceImage),
+            
+            // Check for facial micro-expressions
+            hasMicroExpressions: this.detectMicroExpressions(faceImage),
+            
+            // Check for lighting consistency
+            hasConsistentLighting: this.detectLightingConsistency(faceImage),
+            
+            // Check for image quality (too perfect = photo)
+            hasNaturalQuality: this.detectNaturalQuality(faceImage)
+        };
+        
+        // Calculate fraud score
+        const fraudScore = this.calculateFraudScore(fraudChecks);
+        
+        if (fraudScore > 0.7) {
+            return {
+                isFraud: true,
+                reason: this.getFraudReason(fraudChecks, fraudScore),
+                score: fraudScore,
+                details: fraudChecks
+            };
+        }
+        
+        return { isFraud: false, score: fraudScore, details: fraudChecks };
+    }
+
+    detectStaticImage(faceImage) {
+        // Simulate detection of static image (photo)
+        // Real implementation would analyze pixel patterns, motion, etc.
+        return Math.random() < 0.1; // 10% chance of detecting static image
+    }
+
+    detectScreenReflection(faceImage) {
+        // Simulate detection of phone screen showing photo
+        // Real implementation would look for screen reflections, pixel patterns
+        return Math.random() < 0.05; // 5% chance of detecting screen reflection
+    }
+
+    detectDepth(faceImage) {
+        // Simulate 3D depth detection
+        // Real implementation would use stereo vision or depth sensors
+        return Math.random() > 0.2; // 80% chance of detecting depth (real face)
+    }
+
+    detectEyeMovement(faceImage) {
+        // Simulate eye movement detection (liveness)
+        // Real implementation would track eye movements over time
+        return Math.random() > 0.3; // 70% chance of detecting eye movement
+    }
+
+    detectMicroExpressions(faceImage) {
+        // Simulate micro-expression detection
+        // Real implementation would analyze facial muscle movements
+        return Math.random() > 0.4; // 60% chance of detecting micro-expressions
+    }
+
+    detectLightingConsistency(faceImage) {
+        // Simulate lighting consistency check
+        // Real implementation would analyze light patterns and shadows
+        return Math.random() > 0.2; // 80% chance of consistent lighting
+    }
+
+    detectNaturalQuality(faceImage) {
+        // Simulate natural image quality detection
+        // Real implementation would analyze compression artifacts, noise patterns
+        return Math.random() > 0.1; // 90% chance of natural quality
+    }
+
+    calculateFraudScore(fraudChecks) {
+        let score = 0;
+        
+        // Weight different fraud indicators
+        if (fraudChecks.isStaticImage) score += 0.4;
+        if (fraudChecks.hasScreenReflection) score += 0.3;
+        if (!fraudChecks.hasDepth) score += 0.2;
+        if (!fraudChecks.hasEyeMovement) score += 0.15;
+        if (!fraudChecks.hasMicroExpressions) score += 0.1;
+        if (!fraudChecks.hasConsistentLighting) score += 0.1;
+        if (!fraudChecks.hasNaturalQuality) score += 0.05;
+        
+        return Math.min(score, 1.0); // Cap at 1.0
+    }
+
+    getFraudReason(fraudChecks, score) {
+        if (fraudChecks.isStaticImage) {
+            return "PHOTO SPOOFING DETECTED: Static image detected - please use live camera";
+        }
+        if (fraudChecks.hasScreenReflection) {
+            return "SCREEN REFLECTION DETECTED: Phone screen detected - please use live camera";
+        }
+        if (!fraudChecks.hasDepth) {
+            return "3D DEPTH MISSING: Flat image detected - please use live camera";
+        }
+        if (!fraudChecks.hasEyeMovement) {
+            return "LIVENESS CHECK FAILED: No eye movement detected - please blink and move naturally";
+        }
+        if (!fraudChecks.hasMicroExpressions) {
+            return "MICRO-EXPRESSIONS MISSING: Static facial expression detected - please make natural expressions";
+        }
+        if (!fraudChecks.hasConsistentLighting) {
+            return "LIGHTING INCONSISTENCY: Unnatural lighting detected - please ensure good lighting";
+        }
+        if (!fraudChecks.hasNaturalQuality) {
+            return "IMAGE QUALITY SUSPICIOUS: Unnatural image quality detected - please use live camera";
+        }
+        
+        return `FRAUD DETECTED: Suspicious activity detected (Score: ${(score * 100).toFixed(1)}%)`;
     }
 
     async verifyVoice() {
@@ -707,7 +950,23 @@ class SecureBankApp {
         // Store in localStorage for offline persistence
         localStorage.setItem('fraudAlerts', JSON.stringify(this.fraudAlerts));
         
+        // Update security stats
+        this.updateSecurityStats();
+        
         console.log('🚨 FRAUD ALERT LOGGED:', fraudEvent);
+    }
+
+    updateSecurityStats() {
+        const fraudAttempts = document.getElementById('fraudAttempts');
+        const securitySnapshots = document.getElementById('securitySnapshots');
+        
+        if (fraudAttempts) {
+            fraudAttempts.textContent = this.fraudAlerts.length;
+        }
+        
+        if (securitySnapshots) {
+            securitySnapshots.textContent = this.securitySnapshots.length;
+        }
     }
 
     playAlertSound() {
@@ -913,6 +1172,43 @@ window.testApp = function() {
         console.log('Auth screen shown');
     } else {
         console.log('Auth screen not found');
+    }
+};
+
+// Manual validation function
+window.validateForm = function() {
+    if (app) {
+        app.validatePersonalDetails();
+    } else {
+        console.log('App not initialized yet');
+    }
+};
+
+// Debug form values
+window.checkForm = function() {
+    const fullName = document.getElementById('fullName');
+    const phoneNumber = document.getElementById('phoneNumber');
+    const emailAddress = document.getElementById('emailAddress');
+    const dateOfBirth = document.getElementById('dateOfBirth');
+    const nextBtn = document.getElementById('nextBtn1');
+    
+    console.log('Form values:', {
+        fullName: fullName ? fullName.value : 'NOT FOUND',
+        phoneNumber: phoneNumber ? phoneNumber.value : 'NOT FOUND',
+        emailAddress: emailAddress ? emailAddress.value : 'NOT FOUND',
+        dateOfBirth: dateOfBirth ? dateOfBirth.value : 'NOT FOUND',
+        nextBtn: nextBtn ? nextBtn.disabled : 'NOT FOUND'
+    });
+};
+
+// Test fraud detection
+window.testFraudDetection = function() {
+    if (app) {
+        console.log('Testing fraud detection...');
+        app.showFraudAlert('🚨 PHOTO SPOOFING DETECTED: Static image detected - please use live camera', 'fraud');
+        app.logFraudEvent('Test fraud detection - photo spoofing', 'face_spoofing');
+    } else {
+        console.log('App not initialized yet');
     }
 };
 

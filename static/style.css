@@ -144,7 +144,7 @@ body {
 .auth-screen {
     min-height: 100vh;
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     padding: var(--space-4);
@@ -261,7 +261,7 @@ body {
 .registration-wizard {
     min-height: 100vh;
     background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-accent) 100%);
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     padding: var(--space-4);
@@ -751,6 +751,7 @@ body {
 .banking-app {
     min-height: 100vh;
     background: var(--bg-primary);
+    display: none;
 }
 
 .banking-header {
@@ -945,6 +946,24 @@ body {
     align-items: center;
     gap: var(--space-2);
     font-weight: 600;
+}
+
+.security-stats {
+    display: flex;
+    gap: var(--space-4);
+    margin-top: var(--space-2);
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.stat-item i {
+    color: var(--accent-color);
 }
 
 @keyframes pulseGlow {
