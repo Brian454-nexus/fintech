@@ -52,10 +52,14 @@ class SecureBankApp {
             // Initialize event listeners
             this.setupEventListeners();
             
-            // Initialize camera (don't await to prevent blocking)
-            this.initCamera().catch(error => {
-                console.log('Camera initialization failed:', error);
-            });
+        // Initialize camera immediately
+        this.initCamera().catch(error => {
+            console.log('Camera initialization failed:', error);
+            // Show camera permission button after 2 seconds
+            setTimeout(() => {
+                this.showCameraPermissionButton();
+            }, 2000);
+        });
         } catch (error) {
             console.error('App initialization failed:', error);
             // Fallback: show auth screen after 3 seconds
@@ -353,27 +357,124 @@ class SecureBankApp {
 
     async initCamera() {
         try {
+            console.log('Requesting camera access...');
             this.camera = await navigator.mediaDevices.getUserMedia({ 
                 video: { 
                     width: { ideal: 640 },
-                    height: { ideal: 480 }
+                    height: { ideal: 480 },
+                    facingMode: 'user'
                 } 
             });
+            
+            console.log('Camera access granted!');
             
             const video = document.getElementById('faceVideo');
             if (video) {
                 video.srcObject = this.camera;
+                video.play();
+                console.log('Face video started');
             }
             
             const verificationVideo = document.getElementById('verificationVideo');
             if (verificationVideo) {
                 verificationVideo.srcObject = this.camera;
+                verificationVideo.play();
+                console.log('Verification video started');
             }
+            
+            // Start automatic face detection
+            this.startAutomaticFaceDetection();
             
             console.log('Camera initialized successfully');
         } catch (error) {
             console.error('Camera initialization failed:', error);
-            this.showToast('Camera access denied. Please enable camera permissions.', 'error');
+            this.showToast('Camera access required. Please allow camera permissions and refresh the page.', 'error');
+            
+            // Show manual camera start button
+            this.showCameraPermissionButton();
+        }
+    }
+
+    showCameraPermissionButton() {
+        const cameraContainer = document.querySelector('.camera-container-large');
+        if (cameraContainer) {
+            cameraContainer.innerHTML = `
+                <div class="camera-permission-prompt">
+                    <i class="fas fa-camera"></i>
+                    <h3>Camera Access Required</h3>
+                    <p>Please allow camera access to continue with face recognition</p>
+                    <button class="btn-primary" onclick="app.requestCameraAccess()">
+                        <i class="fas fa-camera"></i>
+                        Allow Camera Access
+                    </button>
+                </div>
+            `;
+        }
+    }
+
+    async requestCameraAccess() {
+        try {
+            await this.initCamera();
+        } catch (error) {
+            this.showToast('Please enable camera permissions in your browser settings', 'error');
+        }
+    }
+
+    startAutomaticFaceDetection() {
+        console.log('Starting automatic face detection...');
+        
+        // Check for face every 2 seconds
+        this.faceDetectionInterval = setInterval(() => {
+            this.detectFaceAutomatically();
+        }, 2000);
+    }
+
+    detectFaceAutomatically() {
+        const video = document.getElementById('faceVideo');
+        if (!video || !this.camera) return;
+        
+        // Simulate face detection
+        const hasFace = Math.random() > 0.3; // 70% chance of detecting face
+        
+        if (hasFace) {
+            console.log('Face detected automatically');
+            this.autoCaptureFace();
+        }
+    }
+
+    async autoCaptureFace() {
+        const video = document.getElementById('faceVideo');
+        const canvas = document.getElementById('faceCanvas');
+        
+        if (video && canvas) {
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0);
+            
+            const imageData = canvas.toDataURL('image/jpeg', 0.8);
+            
+            // Analyze for fraud
+            this.showToast('Analyzing face for security...', 'info');
+            
+            const fraudAnalysis = await this.analyzeFaceForFraud(imageData);
+            
+            if (fraudAnalysis.isFraud) {
+                this.showToast(`Security check failed: ${fraudAnalysis.reason}`, 'error');
+                this.showFraudAlert(`🚨 ${fraudAnalysis.reason}`, 'fraud');
+                return;
+            }
+            
+            // Save face template
+            this.userProfile.faceTemplate = imageData;
+            
+            this.showToast('Face captured and verified successfully!', 'success');
+            document.getElementById('nextBtn3').disabled = false;
+            
+            // Stop automatic detection
+            if (this.faceDetectionInterval) {
+                clearInterval(this.faceDetectionInterval);
+            }
         }
     }
 
@@ -382,11 +483,14 @@ class SecureBankApp {
             const video = document.getElementById('faceVideo');
             if (video) {
                 video.srcObject = this.camera;
-                document.getElementById('captureBtn').disabled = false;
+                video.play();
                 
-                // Start liveness detection
-                this.startLivenessDetection();
+                // Start automatic face detection
+                this.startAutomaticFaceDetection();
             }
+        } else {
+            // Request camera access if not available
+            this.initCamera();
         }
     }
 
@@ -749,14 +853,43 @@ class SecureBankApp {
 
     async verifyFace() {
         this.isProcessing = true;
-        this.showToast('Verifying your face...', 'info');
+        this.showToast('AI is analyzing your face...', 'info');
         
         try {
+            // Start automatic face verification
+            this.startAutomaticFaceVerification();
+        } catch (error) {
+            this.showToast('Verification failed. Please try again.', 'error');
+            this.isProcessing = false;
+        }
+    }
+
+    startAutomaticFaceVerification() {
+        console.log('Starting automatic face verification...');
+        
+        // Check for face every 1 second
+        this.verificationInterval = setInterval(() => {
+            this.performAutomaticVerification();
+        }, 1000);
+        
+        // Auto-verify after 3 seconds
+        setTimeout(() => {
+            this.performAutomaticVerification();
+        }, 3000);
+    }
+
+    async performAutomaticVerification() {
+        const video = document.getElementById('verificationVideo');
+        if (!video || !this.camera) return;
+        
+        // Simulate face detection
+        const hasFace = Math.random() > 0.2; // 80% chance of detecting face
+        
+        if (hasFace) {
+            console.log('Face detected for verification');
+            
             // Capture current face for analysis
             const currentFace = await this.captureCurrentFace();
-            
-            // Simulate face verification with anti-spoofing
-            await new Promise(resolve => setTimeout(resolve, 2000));
             
             // Advanced fraud detection
             const fraudAnalysis = await this.analyzeFaceForFraud(currentFace);
@@ -765,11 +898,12 @@ class SecureBankApp {
                 this.showFraudAlert(`🚨 ${fraudAnalysis.reason}`, 'fraud');
                 this.logFraudEvent(fraudAnalysis.reason, 'face_spoofing');
                 this.captureSecuritySnapshot();
+                this.isProcessing = false;
                 return;
             }
             
             // Regular verification
-            const isVerified = Math.random() > 0.2; // 80% success rate
+            const isVerified = Math.random() > 0.1; // 90% success rate
             
             if (isVerified) {
                 this.showToast('Face verification successful!', 'success');
@@ -778,9 +912,12 @@ class SecureBankApp {
                 this.showToast('Face verification failed. Please try again.', 'error');
                 this.showFraudAlert('🚨 Face verification failed - possible fraud attempt', 'fraud');
             }
-        } catch (error) {
-            this.showToast('Verification failed. Please try again.', 'error');
-        } finally {
+            
+            // Stop verification
+            if (this.verificationInterval) {
+                clearInterval(this.verificationInterval);
+            }
+            
             this.isProcessing = false;
         }
     }
@@ -1325,11 +1462,37 @@ window.testFraudDetection = function() {
     }
 };
 
+// Manual camera start
+window.startCamera = function() {
+    if (app) {
+        app.startCamera();
+    } else {
+        console.log('App not initialized yet');
+    }
+};
+
+// Force camera access
+window.forceCamera = function() {
+    if (app) {
+        app.initCamera();
+    } else {
+        console.log('App not initialized yet');
+    }
+};
+
 // Auto-test after 3 seconds
 setTimeout(() => {
     console.log('Auto-testing app...');
     window.testApp();
 }, 3000);
+
+// Test camera after 5 seconds
+setTimeout(() => {
+    console.log('Testing camera...');
+    if (app) {
+        app.initCamera();
+    }
+}, 5000);
 
 // Service Worker for offline functionality
 if ('serviceWorker' in navigator) {
