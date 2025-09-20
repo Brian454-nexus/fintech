@@ -29,27 +29,44 @@ class SecureBankApp {
     }
 
     async init() {
-        // Check if user is already registered
-        const savedProfile = localStorage.getItem('userProfile');
-        if (savedProfile) {
-            this.userProfile = JSON.parse(savedProfile);
-            if (this.userProfile.isRegistered) {
-                this.showBankingApp();
-                return;
+        try {
+            // Check if user is already registered
+            const savedProfile = localStorage.getItem('userProfile');
+            if (savedProfile) {
+                this.userProfile = JSON.parse(savedProfile);
+                if (this.userProfile.isRegistered) {
+                    this.showBankingApp();
+                    return;
+                }
             }
+
+            // Show loading screen
+            setTimeout(() => {
+                const loadingScreen = document.getElementById('loadingScreen');
+                if (loadingScreen) {
+                    loadingScreen.classList.add('hidden');
+                }
+                this.showAuthScreen();
+            }, 2000);
+
+            // Initialize event listeners
+            this.setupEventListeners();
+            
+            // Initialize camera (don't await to prevent blocking)
+            this.initCamera().catch(error => {
+                console.log('Camera initialization failed:', error);
+            });
+        } catch (error) {
+            console.error('App initialization failed:', error);
+            // Fallback: show auth screen after 3 seconds
+            setTimeout(() => {
+                const loadingScreen = document.getElementById('loadingScreen');
+                if (loadingScreen) {
+                    loadingScreen.classList.add('hidden');
+                }
+                this.showAuthScreen();
+            }, 3000);
         }
-
-        // Show loading screen
-        setTimeout(() => {
-            document.getElementById('loadingScreen').classList.add('hidden');
-            this.showAuthScreen();
-        }, 2000);
-
-        // Initialize event listeners
-        this.setupEventListeners();
-        
-        // Initialize camera
-        await this.initCamera();
     }
 
     setupEventListeners() {
@@ -83,7 +100,20 @@ class SecureBankApp {
     }
 
     showAuthScreen() {
-        document.getElementById('authScreen').style.display = 'block';
+        try {
+            const authScreen = document.getElementById('authScreen');
+            if (authScreen) {
+                authScreen.style.display = 'block';
+            } else {
+                console.error('Auth screen element not found');
+                // Fallback: show registration wizard
+                this.showRegistrationWizard();
+            }
+        } catch (error) {
+            console.error('Error showing auth screen:', error);
+            // Fallback: show registration wizard
+            this.showRegistrationWizard();
+        }
     }
 
     showSignUp() {
@@ -828,8 +858,69 @@ function showAllTransactions() {
 // Initialize the app when DOM is loaded
 let app;
 document.addEventListener('DOMContentLoaded', () => {
-    app = new SecureBankApp();
+    try {
+        app = new SecureBankApp();
+    } catch (error) {
+        console.error('Failed to initialize app:', error);
+        // Fallback: show auth screen after 1 second
+        setTimeout(() => {
+            const loadingScreen = document.getElementById('loadingScreen');
+            if (loadingScreen) {
+                loadingScreen.classList.add('hidden');
+            }
+            const authScreen = document.getElementById('authScreen');
+            if (authScreen) {
+                authScreen.style.display = 'block';
+            }
+        }, 1000);
+    }
 });
+
+// Additional fallback after 5 seconds
+setTimeout(() => {
+    const loadingScreen = document.getElementById('loadingScreen');
+    if (loadingScreen && !loadingScreen.classList.contains('hidden')) {
+        console.log('Force showing auth screen after timeout');
+        loadingScreen.classList.add('hidden');
+        const authScreen = document.getElementById('authScreen');
+        if (authScreen) {
+            authScreen.style.display = 'block';
+        } else {
+            console.log('Auth screen not found, trying registration wizard');
+            const regWizard = document.getElementById('registrationWizard');
+            if (regWizard) {
+                regWizard.style.display = 'block';
+            }
+        }
+    }
+}, 5000);
+
+// Debug: Log when page loads
+console.log('Page loaded, DOM ready');
+console.log('Auth screen element:', document.getElementById('authScreen'));
+console.log('Loading screen element:', document.getElementById('loadingScreen'));
+
+// Simple test function
+window.testApp = function() {
+    console.log('Testing app...');
+    const loadingScreen = document.getElementById('loadingScreen');
+    if (loadingScreen) {
+        loadingScreen.classList.add('hidden');
+    }
+    const authScreen = document.getElementById('authScreen');
+    if (authScreen) {
+        authScreen.style.display = 'block';
+        console.log('Auth screen shown');
+    } else {
+        console.log('Auth screen not found');
+    }
+};
+
+// Auto-test after 3 seconds
+setTimeout(() => {
+    console.log('Auto-testing app...');
+    window.testApp();
+}, 3000);
 
 // Service Worker for offline functionality
 if ('serviceWorker' in navigator) {
