@@ -71,26 +71,49 @@ class SecureBankApp {
 
     setupEventListeners() {
         // Personal details form validation
-        const personalForm = document.querySelector('.personal-form');
-        if (personalForm) {
-            const inputs = personalForm.querySelectorAll('input');
-            inputs.forEach(input => {
-                input.addEventListener('input', () => {
-                    this.validatePersonalDetails();
+        const setupFormValidation = () => {
+            const personalForm = document.querySelector('.personal-form');
+            if (personalForm) {
+                console.log('Setting up form validation for', personalForm);
+                const inputs = personalForm.querySelectorAll('input');
+                console.log('Found inputs:', inputs.length);
+                
+                inputs.forEach((input, index) => {
+                    console.log(`Setting up validation for input ${index}:`, input.id);
+                    input.addEventListener('input', () => {
+                        console.log('Input event triggered for:', input.id);
+                        this.validatePersonalDetails();
+                    });
+                    input.addEventListener('change', () => {
+                        console.log('Change event triggered for:', input.id);
+                        this.validatePersonalDetails();
+                    });
+                    input.addEventListener('blur', () => {
+                        console.log('Blur event triggered for:', input.id);
+                        this.validatePersonalDetails();
+                    });
                 });
-                input.addEventListener('change', () => {
-                    this.validatePersonalDetails();
-                });
-                input.addEventListener('blur', () => {
-                    this.validatePersonalDetails();
-                });
-            });
-        }
+            } else {
+                console.log('Personal form not found, retrying...');
+                setTimeout(setupFormValidation, 500);
+            }
+        };
         
-        // Also validate on page load
+        // Set up form validation
+        setupFormValidation();
+        
+        // Also validate on page load and periodically
         setTimeout(() => {
             this.validatePersonalDetails();
         }, 1000);
+        
+        setTimeout(() => {
+            this.validatePersonalDetails();
+        }, 2000);
+        
+        setTimeout(() => {
+            this.validatePersonalDetails();
+        }, 3000);
 
         // PIN input listener
         const pinInput = document.getElementById('pinInput');
@@ -152,35 +175,57 @@ class SecureBankApp {
         const emailAddress = document.getElementById('emailAddress');
         const dateOfBirth = document.getElementById('dateOfBirth');
         
+        console.log('Validating form elements:', {
+            fullName: !!fullName,
+            phoneNumber: !!phoneNumber,
+            emailAddress: !!emailAddress,
+            dateOfBirth: !!dateOfBirth
+        });
+        
         if (!fullName || !phoneNumber || !emailAddress || !dateOfBirth) {
-            console.log('Form elements not found');
+            console.log('Form elements not found, retrying in 500ms...');
+            setTimeout(() => this.validatePersonalDetails(), 500);
             return;
         }
         
-        const isValid = fullName.value.trim().length > 0 && 
-                      phoneNumber.value.trim().length >= 10 && 
-                      emailAddress.value.trim().includes('@') && 
-                      dateOfBirth.value.trim().length > 0;
+        const fullNameValue = fullName.value ? fullName.value.trim() : '';
+        const phoneValue = phoneNumber.value ? phoneNumber.value.trim() : '';
+        const emailValue = emailAddress.value ? emailAddress.value.trim() : '';
+        const dateValue = dateOfBirth.value ? dateOfBirth.value.trim() : '';
         
-        console.log('Form validation:', {
-            fullName: fullName.value,
-            phoneNumber: phoneNumber.value,
-            emailAddress: emailAddress.value,
-            dateOfBirth: dateOfBirth.value,
+        const isValid = fullNameValue.length > 0 && 
+                      phoneValue.length >= 10 && 
+                      emailValue.includes('@') && 
+                      dateValue.length > 0;
+        
+        console.log('Form validation details:', {
+            fullName: fullNameValue,
+            fullNameLength: fullNameValue.length,
+            phoneNumber: phoneValue,
+            phoneLength: phoneValue.length,
+            emailAddress: emailValue,
+            hasAtSymbol: emailValue.includes('@'),
+            dateOfBirth: dateValue,
+            dateLength: dateValue.length,
             isValid: isValid
         });
         
         const nextBtn = document.getElementById('nextBtn1');
         if (nextBtn) {
             nextBtn.disabled = !isValid;
-            console.log('Next button disabled:', nextBtn.disabled);
+            console.log('Next button state updated:', {
+                disabled: nextBtn.disabled,
+                isValid: isValid
+            });
+        } else {
+            console.log('Next button not found!');
         }
         
         if (isValid) {
-            this.userProfile.fullName = fullName.value.trim();
-            this.userProfile.phoneNumber = phoneNumber.value.trim();
-            this.userProfile.emailAddress = emailAddress.value.trim();
-            this.userProfile.dateOfBirth = dateOfBirth.value.trim();
+            this.userProfile.fullName = fullNameValue;
+            this.userProfile.phoneNumber = phoneValue;
+            this.userProfile.emailAddress = emailValue;
+            this.userProfile.dateOfBirth = dateValue;
         }
     }
 
@@ -199,6 +244,41 @@ class SecureBankApp {
         }
         
         this.updateProgress();
+        
+        // Set up form validation for this wizard
+        setTimeout(() => {
+            this.setupWizardFormValidation();
+        }, 500);
+    }
+
+    setupWizardFormValidation() {
+        console.log('Setting up wizard form validation...');
+        
+        const fullName = document.getElementById('fullName');
+        const phoneNumber = document.getElementById('phoneNumber');
+        const emailAddress = document.getElementById('emailAddress');
+        const dateOfBirth = document.getElementById('dateOfBirth');
+        
+        if (fullName && phoneNumber && emailAddress && dateOfBirth) {
+            console.log('All form elements found, setting up validation...');
+            
+            [fullName, phoneNumber, emailAddress, dateOfBirth].forEach(input => {
+                input.addEventListener('input', () => {
+                    console.log('Input changed:', input.id);
+                    this.validatePersonalDetails();
+                });
+                input.addEventListener('change', () => {
+                    console.log('Input changed (change event):', input.id);
+                    this.validatePersonalDetails();
+                });
+            });
+            
+            // Initial validation
+            this.validatePersonalDetails();
+        } else {
+            console.log('Form elements not ready, retrying...');
+            setTimeout(() => this.setupWizardFormValidation(), 500);
+        }
     }
 
     showBankingApp() {
@@ -1181,6 +1261,39 @@ window.validateForm = function() {
         app.validatePersonalDetails();
     } else {
         console.log('App not initialized yet');
+    }
+};
+
+// Force enable continue button
+window.enableContinue = function() {
+    const nextBtn = document.getElementById('nextBtn1');
+    if (nextBtn) {
+        nextBtn.disabled = false;
+        console.log('Continue button enabled manually');
+    } else {
+        console.log('Continue button not found');
+    }
+};
+
+// Check form status
+window.checkFormStatus = function() {
+    const fullName = document.getElementById('fullName');
+    const phoneNumber = document.getElementById('phoneNumber');
+    const emailAddress = document.getElementById('emailAddress');
+    const dateOfBirth = document.getElementById('dateOfBirth');
+    const nextBtn = document.getElementById('nextBtn1');
+    
+    console.log('Form Status Check:', {
+        fullName: fullName ? { value: fullName.value, length: fullName.value.length } : 'NOT FOUND',
+        phoneNumber: phoneNumber ? { value: phoneNumber.value, length: phoneNumber.value.length } : 'NOT FOUND',
+        emailAddress: emailAddress ? { value: emailAddress.value, hasAt: emailAddress.value.includes('@') } : 'NOT FOUND',
+        dateOfBirth: dateOfBirth ? { value: dateOfBirth.value, length: dateOfBirth.value.length } : 'NOT FOUND',
+        nextBtn: nextBtn ? { disabled: nextBtn.disabled, text: nextBtn.textContent } : 'NOT FOUND'
+    });
+    
+    // Force validation
+    if (app) {
+        app.validatePersonalDetails();
     }
 };
 
