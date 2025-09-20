@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face-to-Phone | AI Fraud Detection</title>
+    <link rel="stylesheet" href="static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-logo">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <h2>Face-to-Phone</h2>
+            <p>AI-Powered Fraud Detection</p>
+            <div class="loading-spinner"></div>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="app" class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Face-to-Phone</span>
+                </div>
+                <div class="status-indicator">
+                    <div class="status-dot offline"></div>
+                    <span>Offline Mode</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="app-nav">
+            <button class="nav-item active" data-view="dashboard">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </button>
+            <button class="nav-item" data-view="biometric">
+                <i class="fas fa-user-check"></i>
+                <span>Biometric</span>
+            </button>
+            <button class="nav-item" data-view="transactions">
+                <i class="fas fa-exchange-alt"></i>
+                <span>Transactions</span>
+            </button>
+            <button class="nav-item" data-view="security">
+                <i class="fas fa-shield-alt"></i>
+                <span>Security</span>
+            </button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="app-main">
+            <!-- Dashboard View -->
+            <div id="dashboardView" class="view active">
+                <div class="view-header">
+                    <h1>Security Dashboard</h1>
+                    <p>Real-time fraud detection and biometric authentication</p>
+                </div>
+
+                <div class="dashboard-grid">
+                    <!-- Security Status Card -->
+                    <div class="card security-status">
+                        <div class="card-header">
+                            <h3><i class="fas fa-shield-alt"></i> Security Status</h3>
+                            <div class="status-badge active">Active</div>
+                        </div>
+                        <div class="card-content">
+                            <div class="security-metrics">
+                                <div class="metric">
+                                    <span class="metric-value" id="fraudBlocked">0</span>
+                                    <span class="metric-label">Fraud Attempts Blocked</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-value" id="biometricVerified">0</span>
+                                    <span class="metric-label">Biometric Verifications</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="card quick-actions">
+                        <div class="card-header">
+                            <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="action-buttons">
+                                <button class="action-btn primary" onclick="startTransaction()">
+                                    <i class="fas fa-plus"></i>
+                                    <span>New Transaction</span>
+                                </button>
+                                <button class="action-btn secondary" onclick="enrollBiometric()">
+                                    <i class="fas fa-user-plus"></i>
+                                    <span>Enroll Biometric</span>
+                                </button>
+                                <button class="action-btn danger" onclick="simulateFraud()">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <span>Test Fraud Detection</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Alerts -->
+                    <div class="card alerts-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-bell"></i> Recent Alerts</h3>
+                            <button class="btn-small" onclick="refreshAlerts()">Refresh</button>
+                        </div>
+                        <div class="card-content">
+                            <div id="alertsList" class="alerts-list">
+                                <div class="alert-item">
+                                    <div class="alert-icon">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                    <div class="alert-content">
+                                        <div class="alert-title">System Ready</div>
+                                        <div class="alert-message">All security systems operational</div>
+                                        <div class="alert-time">Just now</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Transaction Summary -->
+                    <div class="card transaction-summary">
+                        <div class="card-header">
+                            <h3><i class="fas fa-chart-line"></i> Transaction Summary</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="summary-stats">
+                                <div class="stat">
+                                    <span class="stat-value" id="totalTransactions">0</span>
+                                    <span class="stat-label">Total Transactions</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-value" id="fraudRate">0%</span>
+                                    <span class="stat-label">Fraud Rate</span>
+                                </div>
+                                <div class="stat">
+                                    <span class="stat-value" id="avgAmount">$0</span>
+                                    <span class="stat-label">Avg Amount</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Biometric View -->
+            <div id="biometricView" class="view">
+                <div class="view-header">
+                    <h1>Biometric Authentication</h1>
+                    <p>Secure your account with face and voice recognition</p>
+                </div>
+
+                <div class="biometric-container">
+                    <!-- Face Recognition -->
+                    <div class="card biometric-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-user-circle"></i> Face Recognition</h3>
+                            <div class="enrollment-status" id="faceStatus">
+                                <span class="status-text">Not Enrolled</span>
+                                <div class="status-indicator"></div>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <div class="camera-container">
+                                <video id="faceVideo" autoplay muted></video>
+                                <canvas id="faceCanvas" style="display: none;"></canvas>
+                                <div class="camera-overlay">
+                                    <div class="face-frame"></div>
+                                    <div class="camera-instructions">
+                                        Position your face within the frame
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="biometric-controls">
+                                <button class="btn primary" id="enrollFaceBtn" onclick="enrollFace()">
+                                    <i class="fas fa-user-plus"></i>
+                                    Enroll Face
+                                </button>
+                                <button class="btn secondary" id="verifyFaceBtn" onclick="verifyFace()" disabled>
+                                    <i class="fas fa-user-check"></i>
+                                    Verify Face
+                                </button>
+                            </div>
+                            <div id="faceResult" class="biometric-result"></div>
+                        </div>
+                    </div>
+
+                    <!-- Voice Recognition -->
+                    <div class="card biometric-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-microphone"></i> Voice Recognition</h3>
+                            <div class="enrollment-status" id="voiceStatus">
+                                <span class="status-text">Not Enrolled</span>
+                                <div class="status-indicator"></div>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <div class="voice-container">
+                                <div class="voice-visualizer">
+                                    <div class="voice-wave">
+                                        <div class="wave-bar"></div>
+                                        <div class="wave-bar"></div>
+                                        <div class="wave-bar"></div>
+                                        <div class="wave-bar"></div>
+                                        <div class="wave-bar"></div>
+                                    </div>
+                                </div>
+                                <div class="voice-instructions">
+                                    <p>Speak clearly into your microphone</p>
+                                    <p class="voice-text">"My voice is my password"</p>
+                                </div>
+                            </div>
+                            <div class="biometric-controls">
+                                <button class="btn primary" id="enrollVoiceBtn" onclick="enrollVoice()">
+                                    <i class="fas fa-microphone"></i>
+                                    Enroll Voice
+                                </button>
+                                <button class="btn secondary" id="verifyVoiceBtn" onclick="verifyVoice()" disabled>
+                                    <i class="fas fa-microphone-alt"></i>
+                                    Verify Voice
+                                </button>
+                            </div>
+                            <div id="voiceResult" class="biometric-result"></div>
+                        </div>
+                    </div>
+
+                    <!-- PIN Fallback -->
+                    <div class="card biometric-card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-key"></i> PIN Authentication</h3>
+                            <div class="enrollment-status" id="pinStatus">
+                                <span class="status-text">Not Set</span>
+                                <div class="status-indicator"></div>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <div class="pin-container">
+                                <div class="pin-input">
+                                    <input type="password" id="pinInput" placeholder="Enter 4-digit PIN" maxlength="4">
+                                    <button class="btn-small" onclick="setupPIN()">Setup PIN</button>
+                                </div>
+                                <div class="pin-instructions">
+                                    <p>Fallback authentication for low-tech devices</p>
+                                </div>
+                            </div>
+                            <div class="biometric-controls">
+                                <button class="btn secondary" onclick="verifyPIN()">
+                                    <i class="fas fa-unlock"></i>
+                                    Verify PIN
+                                </button>
+                            </div>
+                            <div id="pinResult" class="biometric-result"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transactions View -->
+            <div id="transactionsView" class="view">
+                <div class="view-header">
+                    <h1>Transaction Management</h1>
+                    <p>Monitor and process financial transactions</p>
+                </div>
+
+                <div class="transactions-container">
+                    <!-- New Transaction Form -->
+                    <div class="card transaction-form">
+                        <div class="card-header">
+                            <h3><i class="fas fa-plus-circle"></i> New Transaction</h3>
+                        </div>
+                        <div class="card-content">
+                            <form id="transactionForm" onsubmit="processTransaction(event)">
+                                <div class="form-group">
+                                    <label for="amount">Amount ($)</label>
+                                    <input type="number" id="amount" name="amount" placeholder="0.00" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="transactionType">Transaction Type</label>
+                                    <select id="transactionType" name="type" required>
+                                        <option value="transfer">Transfer</option>
+                                        <option value="payment">Payment</option>
+                                        <option value="withdrawal">Withdrawal</option>
+                                        <option value="deposit">Deposit</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="recipient">Recipient (Optional)</label>
+                                    <input type="text" id="recipient" name="recipient" placeholder="Enter recipient name">
+                                </div>
+                                <button type="submit" class="btn primary full-width">
+                                    <i class="fas fa-paper-plane"></i>
+                                    Process Transaction
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Transaction History -->
+                    <div class="card transaction-history">
+                        <div class="card-header">
+                            <h3><i class="fas fa-history"></i> Transaction History</h3>
+                            <button class="btn-small" onclick="refreshTransactions()">Refresh</button>
+                        </div>
+                        <div class="card-content">
+                            <div id="transactionsList" class="transactions-list">
+                                <div class="transaction-item">
+                                    <div class="transaction-icon">
+                                        <i class="fas fa-info-circle"></i>
+                                    </div>
+                                    <div class="transaction-content">
+                                        <div class="transaction-title">No transactions yet</div>
+                                        <div class="transaction-message">Create your first transaction to see history</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security View -->
+            <div id="securityView" class="view">
+                <div class="view-header">
+                    <h1>Security Center</h1>
+                    <p>Monitor fraud detection and security alerts</p>
+                </div>
+
+                <div class="security-container">
+                    <!-- Fraud Detection Status -->
+                    <div class="card fraud-detection">
+                        <div class="card-header">
+                            <h3><i class="fas fa-shield-alt"></i> Fraud Detection Engine</h3>
+                            <div class="status-badge active">Online</div>
+                        </div>
+                        <div class="card-content">
+                            <div class="fraud-metrics">
+                                <div class="metric-card">
+                                    <div class="metric-icon">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </div>
+                                    <div class="metric-info">
+                                        <div class="metric-value" id="fraudDetected">0</div>
+                                        <div class="metric-label">Fraud Attempts Detected</div>
+                                    </div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-icon">
+                                        <i class="fas fa-clock"></i>
+                                    </div>
+                                    <div class="metric-info">
+                                        <div class="metric-value" id="avgDetectionTime">0.2s</div>
+                                        <div class="metric-label">Avg Detection Time</div>
+                                    </div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-icon">
+                                        <i class="fas fa-percentage"></i>
+                                    </div>
+                                    <div class="metric-info">
+                                        <div class="metric-value" id="accuracyRate">99.8%</div>
+                                        <div class="metric-label">Detection Accuracy</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Security Alerts -->
+                    <div class="card security-alerts">
+                        <div class="card-header">
+                            <h3><i class="fas fa-bell"></i> Security Alerts</h3>
+                            <button class="btn-small" onclick="refreshSecurityAlerts()">Refresh</button>
+                        </div>
+                        <div class="card-content">
+                            <div id="securityAlertsList" class="security-alerts-list">
+                                <div class="alert-item success">
+                                    <div class="alert-icon">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                    <div class="alert-content">
+                                        <div class="alert-title">System Initialized</div>
+                                        <div class="alert-message">All security systems are operational</div>
+                                        <div class="alert-time">System startup</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Demo Controls -->
+                    <div class="card demo-controls">
+                        <div class="card-header">
+                            <h3><i class="fas fa-play-circle"></i> Demo Controls</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="demo-buttons">
+                                <button class="btn danger" onclick="simulateFraudScenario('large_transaction')">
+                                    <i class="fas fa-dollar-sign"></i>
+                                    Large Transaction Fraud
+                                </button>
+                                <button class="btn danger" onclick="simulateFraudScenario('rapid_transactions')">
+                                    <i class="fas fa-bolt"></i>
+                                    Rapid Transactions Fraud
+                                </button>
+                                <button class="btn danger" onclick="simulateFraudScenario('unusual_time')">
+                                    <i class="fas fa-clock"></i>
+                                    Unusual Time Fraud
+                                </button>
+                                <button class="btn secondary" onclick="testBiometricFraud()">
+                                    <i class="fas fa-user-times"></i>
+                                    Biometric Fraud Test
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for Transaction Processing -->
+    <div id="transactionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Processing Transaction</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="processing-steps">
+                    <div class="step active" id="step1">
+                        <div class="step-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div class="step-content">
+                            <div class="step-title">Security Check</div>
+                            <div class="step-description">Verifying transaction security</div>
+                        </div>
+                    </div>
+                    <div class="step" id="step2">
+                        <div class="step-icon">
+                            <i class="fas fa-user-check"></i>
+                        </div>
+                        <div class="step-content">
+                            <div class="step-title">Biometric Verification</div>
+                            <div class="step-description">Confirming user identity</div>
+                        </div>
+                    </div>
+                    <div class="step" id="step3">
+                        <div class="step-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="step-content">
+                            <div class="step-title">Transaction Complete</div>
+                            <div class="step-description">Processing successful</div>
+                        </div>
+                    </div>
+                </div>
+                <div id="transactionResult" class="transaction-result"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="notificationToast" class="toast">
+        <div class="toast-content">
+            <div class="toast-icon">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <div class="toast-message" id="toastMessage">Notification message</div>
+        </div>
+    </div>
+
+    <script src="static/script.js"></script>
+</body>
+</html>
