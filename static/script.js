@@ -41,25 +41,18 @@ class SecureBankApp {
             }
 
             // Show loading screen
-            setTimeout(() => {
+        setTimeout(() => {
                 const loadingScreen = document.getElementById('loadingScreen');
                 if (loadingScreen) {
                     loadingScreen.classList.add('hidden');
                 }
                 this.showAuthScreen();
-            }, 2000);
+        }, 2000);
 
-            // Initialize event listeners
-            this.setupEventListeners();
-            
-        // Initialize camera immediately
-        this.initCamera().catch(error => {
-            console.log('Camera initialization failed:', error);
-            // Show camera permission button after 2 seconds
-            setTimeout(() => {
-                this.showCameraPermissionButton();
-            }, 2000);
-        });
+        // Initialize event listeners
+        this.setupEventListeners();
+        
+        // Don't initialize camera immediately - wait for wizard step
         } catch (error) {
             console.error('App initialization failed:', error);
             // Fallback: show auth screen after 3 seconds
@@ -118,7 +111,7 @@ class SecureBankApp {
         setTimeout(() => {
             this.validatePersonalDetails();
         }, 3000);
-
+        
         // PIN input listener
         const pinInput = document.getElementById('pinInput');
         if (pinInput) {
@@ -353,6 +346,103 @@ class SecureBankApp {
         if (currentStep) {
             currentStep.classList.add('active');
         }
+        
+        // Initialize camera only on face enrollment step (step 3)
+        if (stepNumber === 3) {
+            this.initCameraForFaceEnrollment();
+        }
+        
+        // Stop any running AI processes when changing steps
+        this.stopAllAIProcesses();
+    }
+
+    stopAllAIProcesses() {
+        if (this.faceDetectionInterval) {
+            clearInterval(this.faceDetectionInterval);
+            this.faceDetectionInterval = null;
+        }
+        if (this.verificationInterval) {
+            clearInterval(this.verificationInterval);
+            this.verificationInterval = null;
+        }
+        if (this.continuousMonitoring) {
+            clearInterval(this.continuousMonitoring);
+            this.continuousMonitoring = null;
+        }
+    }
+
+    async initCameraForFaceEnrollment() {
+        try {
+            console.log('Initializing camera for face enrollment...');
+            this.camera = await navigator.mediaDevices.getUserMedia({ 
+                video: { 
+                    width: { ideal: 640 },
+                    height: { ideal: 480 },
+                    facingMode: 'user'
+                } 
+            });
+            
+            const video = document.getElementById('faceVideo');
+            if (video) {
+                video.srcObject = this.camera;
+                video.play();
+                console.log('Face video started for enrollment');
+            }
+            
+            // Start face detection only for enrollment
+            this.startFaceEnrollmentDetection();
+            
+        } catch (error) {
+            console.error('Camera initialization failed:', error);
+            this.showToast('Camera access required for face enrollment', 'error');
+        }
+    }
+
+    startFaceEnrollmentDetection() {
+        console.log('Starting face enrollment detection...');
+        
+        // Check for face every 3 seconds during enrollment
+        this.faceDetectionInterval = setInterval(() => {
+            this.detectFaceForEnrollment();
+        }, 3000);
+    }
+
+    detectFaceForEnrollment() {
+        const video = document.getElementById('faceVideo');
+        if (!video || !this.camera) return;
+        
+        // Simulate face detection
+        const hasFace = Math.random() > 0.4; // 60% chance of detecting face
+        
+        if (hasFace) {
+            console.log('Face detected for enrollment');
+            this.autoCaptureFaceForEnrollment();
+        }
+    }
+
+    async autoCaptureFaceForEnrollment() {
+        const video = document.getElementById('faceVideo');
+        const canvas = document.getElementById('faceCanvas');
+        
+        if (video && canvas) {
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0);
+            
+            const imageData = canvas.toDataURL('image/jpeg', 0.8);
+            
+            // Save face template
+            this.userProfile.faceTemplate = imageData;
+            
+            this.showToast('Face captured successfully!', 'success');
+            document.getElementById('nextBtn3').disabled = false;
+            
+            // Stop detection
+            if (this.faceDetectionInterval) {
+                clearInterval(this.faceDetectionInterval);
+            }
+        }
     }
 
     async initCamera() {
@@ -407,8 +497,8 @@ class SecureBankApp {
                         <i class="fas fa-camera"></i>
                         Allow Camera Access
                     </button>
-                </div>
-            `;
+            </div>
+        `;
         }
     }
 
@@ -541,9 +631,9 @@ class SecureBankApp {
             if (fraudAnalysis.isFraud) {
                 this.showToast(`Security check failed: ${fraudAnalysis.reason}`, 'error');
                 this.showFraudAlert(`🚨 ${fraudAnalysis.reason}`, 'fraud');
-                return;
-            }
-            
+            return;
+        }
+
             // Save face template
             this.userProfile.faceTemplate = imageData;
             
@@ -573,7 +663,7 @@ class SecureBankApp {
                 reader.onloadend = () => {
                     this.userProfile.voiceTemplate = reader.result;
                     this.showToast('Voice recorded successfully!', 'success');
-                    document.getElementById('nextBtn3').disabled = false;
+                    document.getElementById('nextBtn4').disabled = false;
                 };
                 reader.readAsDataURL(audioBlob);
             };
@@ -648,7 +738,11 @@ class SecureBankApp {
         const pinInput = document.getElementById('pinInput');
         if (pinInput && pinInput.value.length === 4) {
             this.userProfile.pin = pinInput.value;
-            document.getElementById('completeBtn').disabled = false;
+            const completeBtn = document.getElementById('completeBtn');
+            if (completeBtn) {
+                completeBtn.disabled = false;
+                console.log('Complete button enabled');
+            }
         }
     }
 
@@ -670,8 +764,8 @@ class SecureBankApp {
             // Load from localStorage or show empty state
             const savedTransactions = localStorage.getItem('userTransactions');
             const transactions = savedTransactions ? JSON.parse(savedTransactions) : [];
-            
-            if (transactions.length === 0) {
+
+        if (transactions.length === 0) {
                 transactionList.innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-receipt"></i>
@@ -681,26 +775,32 @@ class SecureBankApp {
                 `;
             } else {
                 transactionList.innerHTML = transactions.map(tx => `
-                    <div class="transaction-item">
+                <div class="transaction-item">
                         <div class="transaction-info">
                             <div class="transaction-type">${tx.type}</div>
                             <div class="transaction-details">${tx.details}</div>
                             <div class="transaction-time">${tx.time}</div>
-                        </div>
+                    </div>
                         <div class="transaction-amount ${tx.amount > 0 ? 'positive' : 'negative'}">
                             ${tx.amount > 0 ? '+' : ''}KSh ${Math.abs(tx.amount).toLocaleString()}
-                        </div>
                     </div>
+                </div>
                 `).join('');
             }
         }
     }
 
     startContinuousMonitoring() {
+        // Only start monitoring after user is fully registered
+        if (!this.userProfile.isRegistered) {
+            console.log('User not registered yet, skipping continuous monitoring');
+            return;
+        }
+
         // Start continuous biometric monitoring
         this.continuousMonitoring = setInterval(() => {
             this.performContinuousVerification();
-        }, 15000); // Check every 15 seconds
+        }, 30000); // Check every 30 seconds (less aggressive)
         
         console.log('Continuous biometric monitoring started');
     }
@@ -906,9 +1006,9 @@ class SecureBankApp {
             const isVerified = Math.random() > 0.1; // 90% success rate
             
             if (isVerified) {
-                this.showToast('Face verification successful!', 'success');
+                    this.showToast('Face verification successful!', 'success');
                 this.completeTransaction();
-            } else {
+                } else {
                 this.showToast('Face verification failed. Please try again.', 'error');
                 this.showFraudAlert('🚨 Face verification failed - possible fraud attempt', 'fraud');
             }
@@ -1070,7 +1170,7 @@ class SecureBankApp {
             if (isVerified) {
                             this.showToast('Voice verification successful!', 'success');
                 this.completeTransaction();
-                        } else {
+            } else {
                 this.showToast('Voice verification failed. Please try again.', 'error');
                 this.showFraudAlert('🚨 Voice verification failed - possible fraud attempt', 'fraud');
             }
@@ -1084,7 +1184,7 @@ class SecureBankApp {
     async verifyPIN() {
         const pinInput = document.getElementById('pinVerificationInput');
         const enteredPin = pinInput.value;
-        
+
         if (enteredPin.length !== 4) {
             this.showToast('Please enter a 4-digit PIN', 'error');
             return;
@@ -1100,12 +1200,12 @@ class SecureBankApp {
             const isVerified = enteredPin === this.userProfile.pin;
             
             if (isVerified) {
-                this.showToast('PIN verification successful!', 'success');
+                    this.showToast('PIN verification successful!', 'success');
                 this.completeTransaction();
-            } else {
+                } else {
                 this.showToast('Invalid PIN. Please try again.', 'error');
                 this.showFraudAlert('🚨 Invalid PIN entered - possible fraud attempt', 'fraud');
-                pinInput.value = '';
+            pinInput.value = '';
                 this.updatePinDots('', 'verification');
             }
         } catch (error) {
@@ -1486,13 +1586,7 @@ setTimeout(() => {
     window.testApp();
 }, 3000);
 
-// Test camera after 5 seconds
-setTimeout(() => {
-    console.log('Testing camera...');
-    if (app) {
-        app.initCamera();
-    }
-}, 5000);
+// Camera will be initialized only when needed in wizard
 
 // Service Worker for offline functionality
 if ('serviceWorker' in navigator) {
