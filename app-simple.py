@@ -374,6 +374,36 @@ def setup_pin():
     result = biometric_auth.setup_pin(user_id, pin)
     return jsonify(result)
 
+@app.route('/api/save-user-profile', methods=['POST'])
+def save_user_profile():
+    data = request.json
+    user_id = data.get('user_id', 'demo_user')
+    
+    # In a real app, this would save to a database
+    # For demo purposes, we'll just return success
+    return jsonify({
+        "status": "success",
+        "message": "User profile saved successfully",
+        "user_id": user_id
+    })
+
+@app.route('/api/get-user-profile', methods=['GET'])
+def get_user_profile():
+    user_id = request.args.get('user_id', 'demo_user')
+    
+    # In a real app, this would fetch from database
+    # For demo purposes, return mock data
+    return jsonify({
+        "status": "success",
+        "user_profile": {
+            "user_id": user_id,
+            "is_registered": True,
+            "face_enrolled": True,
+            "voice_enrolled": True,
+            "pin_set": True
+        }
+    })
+
 @app.route('/api/simulate-fraud', methods=['POST'])
 def simulate_fraud():
     """Simulate various fraud scenarios for demo"""
